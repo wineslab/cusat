@@ -1,0 +1,19 @@
+logger:
+  level: info
+global:
+upf:
+  pfcp:
+    server:
+      - address: @PFCP_BIND@
+    client:
+      smf:
+        - address: @SMF@
+          port: @SMF_PORT@
+  gtpu:
+    server:
+      - address: @SHORE_IP@
+  session:
+    - dev: ogstun
+      dnn: @DNN@
+      gateway: @UE_GATEWAY@
+      subnet: @UE_SUBNET@

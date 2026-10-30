@@ -1,0 +1,46 @@
+# Conservative endpoint 0: runtime-controlled LEO ACM on Jetson Orin NX + X410.
+# Verify the USRP address and RF channel wiring before transmitting.
+radio:
+  usrp: "addr=192.168.40.20"
+  tx_freq: 1.95e9
+  rx_freq: 2.05e9
+  tx_gain: 20
+  rx_gain: 20
+  rate: 20.48e6
+  sym_rate: 5e6
+  tx_channel: 1
+  rx_channel: 3
+  subdev_spec: "A:0 A:1 B:0 B:1"
+  send_frame_size: 8000
+  recv_frame_size: 8000
+  tx_send_chunk: 1
+  tx_send_realtime: false
+
+modulation:
+  modcod: qpsk1/4
+
+acm:
+  enabled: true
+  guard_db: 2.5
+  bootstrap_margin_db: 2.0          # Extra headroom for the initial direct selection
+  snr_ewma_alpha: 0.1
+  # Optional MODCOD-index ceiling; commented means all supported modes.
+  # max_modcod: 26
+  exclude_modcods: [10, 15, 16, 17, 22, 23]
+  feedback_interval_ms: 500
+
+channel:
+  side: tx
+  propagation_delay: true
+  pathloss_model: freespace
+  distance_km: 1100
+  noise_port: 5556
+
+gpu:
+  pin_threads: true
+  realtime_threads: false
+  cuda_sync: spin
+
+io:
+  tap: dvbs2a0
+  log: true

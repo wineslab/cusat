@@ -1,0 +1,37 @@
+# Conservative CCM endpoint 1 for DGX Spark + X410.
+# Verify the USRP address and physical channel wiring before transmitting.
+radio:
+  usrp: "addr=192.168.40.18"
+  tx_freq: 2.05e9
+  rx_freq: 1.95e9
+  tx_gain: 20
+  rx_gain: 20
+  rate: 20.48e6
+  sym_rate: 5e6
+  tx_channel: 1
+  rx_channel: 3
+  subdev_spec: "A:0 A:1 B:0 B:1"
+  send_frame_size: 1472
+  recv_frame_size: 1472
+  tx_send_chunk: 8
+
+modulation:
+  modcod: qpsk1/4
+
+acm:
+  enabled: false
+  guard_db: 2.5
+
+channel:
+  propagation_delay: false
+  pathloss_model: none
+  distance_km: 0
+
+gpu:
+  pin_threads: true
+  realtime_threads: false
+  cuda_sync: spin
+
+io:
+  tap: dvbs2b0
+  log: true

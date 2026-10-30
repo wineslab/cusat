@@ -1,0 +1,52 @@
+# Thor shore profile. Edit only the USRP address if the tested wiring is used.
+radio:
+  usrp: "addr=192.168.40.20"
+  tx_freq: 1.95e9
+  rx_freq: 2.05e9
+  tx_gain: 0
+  rx_gain: 20
+  # This 1.28-SPS profile is the tested peer of the Spark boat profile.
+  rate: 30.72e6
+  sym_rate: 24e6
+  # DVB on ch0: TX out TX/RX0, RX in RX1 (UHD ZBX defaults).
+  tx_channel: 0
+  rx_channel: 0
+  subdev_spec: "A:0 A:1 B:0 B:1"
+  send_frame_size: 1472
+  recv_frame_size: 1472
+  tx_send_chunk: 8
+
+modulation:
+  modcod: qpsk1/4
+  rolloff: 0.10
+
+acm:
+  enabled: true
+  guard_db: 2.5
+  bootstrap_margin_db: 2.0
+  snr_ewma_alpha: 0.1
+  max_modcod: 26
+  exclude_modcods: [10, 15, 16, 17, 22, 23]
+  feedback_interval_ms: 500
+
+channel:
+  side: tx
+  propagation_delay: true
+  pathloss_model: freespace
+  # 550-km LEO feeder: path-loss reference and fixed IQ delay at zenith (2 x 550 km
+  # bent pipe). The cellular dashboard sends DIST/LINK along the pass and adds the
+  # extra slant-range delay with netem (was 71572 km, GEO).
+  distance_km: 1100
+  noise_port: 5556
+
+gpu:
+  pin_threads: true
+  realtime_threads: false
+  cuda_sync: spin
+
+threads:
+  cores: [4, 5, 6, 7, 8, 9]
+
+io:
+  tap: dvbs2b0
+  log: true

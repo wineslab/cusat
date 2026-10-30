@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Live cuSAT cellular demo: a Sierra 5G UE served by an OAI gNB whose backhaul is a DVB-S2 feeder through an emulated 550-km LEO satellite.">
+  <title>cuSAT · 5G over a LEO feeder</title>
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="cellular.css">
+</head>
+<body class="cellular-page">
+<main>
+  <header>
+    <div class="identity"><span class="wordmark">cuSAT</span><h1>Demo: 5G over a LEO<br>DVB-S2 Satellite Feeder</h1></div>
+    <div class="header-actions"><span class="ready-pill" id="radio-ready" role="status"><i aria-hidden="true"></i><span>Not ready</span></span><span class="preview-status" id="live-status">Connecting…</span><button id="restart-ue" class="quiet" title="Delete the Sierra's PDU session, cycle airplane mode and attach again (about 20 s)">Restart UE</button><button id="animate" class="quiet" title="Pause or resume the satellite pass">Pause pass</button><button id="restart-cell" class="quiet" title="Restart the gNB, the feeder modems and the core services, then the UE (about 2 min; no FPGA reload)">Restart cellular</button><button id="demo-switch" class="quiet demo-switch" title="Reflash both X410s and move to the DIFI functional-split demo (several minutes)">DIFI demo</button><button id="demo-stop" class="quiet demo-stop" title="Stop the gNB, the feeder and the UE and leave the radios idle">Stop demo</button><button id="fullscreen" class="quiet">Full screen <span aria-hidden="true">⛶</span></button></div>
+  </header>
+
+  <section class="split-workspace path-workspace" aria-label="Where the equipment runs: remote site, satellite and gateway site">
+    <div class="scene" id="scene">
+      <svg class="legs" id="legs" aria-hidden="true"><path id="leg-a"/><path id="leg-b"/></svg>
+      <div class="band space-band"><span class="band-label">Space</span>
+        <figure class="sat-card" id="node-sat"><svg class="sat-icon" viewBox="-34 -22 68 44" aria-hidden="true"><path class="solar-panel" d="M-32-8H-9V8H-32Z M9-8H32V8H9Z"/><path class="solar-grid" d="M-25-8V8 M-17-8V8 M-32 0H-9 M17-8V8 M25-8V8 M9 0H32"/><rect class="satellite-bus" x="-8" y="-12" width="16" height="24" rx="2"/><path class="antenna" d="M0 12V18 M-9 15Q0 25 9 15"/></svg><figcaption><h3>LEO satellite · 550 km</h3><span class="node-sub">emulated bent pipe · relay only</span><span class="sat-geometry" id="sat-geometry">—</span></figcaption></figure>
+      </div>
+      <div class="band ground-band"><span class="band-label">Ground</span>
+        <div class="site" id="site-remote"><h3 class="site-title">Remote site <span>5G cell + satellite terminal</span></h3>
+          <div class="chain">
+            <article class="node" id="node-ue"><svg class="ue-icon phone" viewBox="0 0 40 64" aria-hidden="true"><defs><linearGradient id="screen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b4f86"/><stop offset="1" stop-color="#16263f"/></linearGradient></defs><rect x="2" y="1" width="36" height="62" rx="7" class="phone-body"/><rect x="5" y="7" width="30" height="48" rx="3" fill="url(#screen)"/><rect x="15" y="3.5" width="10" height="1.6" rx=".8" class="phone-speaker"/><circle cx="20" cy="59" r="2" class="phone-button"/><g class="phone-bars"><rect x="11" y="24" width="3" height="5" rx=".5"/><rect x="15.5" y="21" width="3" height="8" rx=".5"/><rect x="20" y="18" width="3" height="11" rx=".5"/><rect x="24.5" y="15" width="3" height="14" rx=".5"/></g><text x="20" y="42" text-anchor="middle" class="phone-5g">5G</text></svg><h4>5G UE</h4><span class="node-sub">Sierra EM9293 modem · USB on the ZGX .11</span><dl id="ue-facts"></dl></article>
+            <div class="link radio-link"><span class="link-title" id="radio-title">5G NR</span><span class="link-sub">RF cable · circulator (on the bench)</span><dl id="radio-facts"></dl></div>
+            <article class="node" id="node-x18"><img class="device x410" src="assets/x410.png" alt="" width="4310" height="1968"><h4>USRP X410 .18</h4><span class="node-sub">ch1: 5G NR radio · ch0: satellite terminal RF</span><dl id="x18-facts"></dl></article>
+            <div class="link qsfp-link"><span class="link-title">100 GbE</span></div>
+            <article class="node" id="node-gnb"><img class="device zgx" src="assets/hp-zgx.png" alt="" width="826" height="359"><h4>HP ZGX .11</h4><span class="node-sub">OAI gNB · cuSAT DVB-S2 modem (terminal)</span><dl id="gnb-facts"></dl></article>
+          </div>
+        </div>
+        <div class="site" id="site-gateway"><h3 class="site-title">Gateway site <span>satellite gateway + 5G core</span></h3>
+          <div class="chain">
+            <article class="node" id="node-x20"><img class="device x410" src="assets/x410.png" alt="" width="4310" height="1968"><h4>USRP X410 .20</h4><span class="node-sub">ch0: satellite gateway RF</span><dl id="x20-facts"></dl></article>
+            <div class="link qsfp-link"><span class="link-title">100 GbE</span></div>
+            <article class="node" id="node-core"><img class="device spark" src="assets/spark.webp" alt="" width="800" height="800"><h4>DGX Spark .12</h4><span class="node-sub">cuSAT DVB-S2 modem (gateway) · Open5GS core · data network</span><dl id="core-facts"></dl></article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="measurements" aria-label="Live statistics">
+    <div class="metrics-heading"><h2>Statistics</h2><span class="calculated" id="telemetry-note">LIVE TELEMETRY</span></div>
+    <div class="budget">
+      <div class="budget-values">
+        <article class="gauge-card dl-gauge"><h3>UE downlink <span>Received by the Sierra</span></h3><div class="gauge"><svg viewBox="0 0 240 140" aria-hidden="true"><path class="gauge-track" d="M20 120 A100 100 0 0 1 220 120" pathLength="100"/><path id="dl-arc" class="gauge-arc" d="M20 120 A100 100 0 0 1 220 120" pathLength="100"/></svg><strong id="dl-rate">— <small>Mb/s</small></strong></div><p id="dl-note">—</p><div class="gauge-scale"><span>0</span><span id="dl-max">10 Mb/s</span></div></article>
+        <article class="gauge-card ul-gauge"><h3>UE uplink <span>Received by the core</span></h3><div class="gauge"><svg viewBox="0 0 240 140" aria-hidden="true"><path class="gauge-track" d="M20 120 A100 100 0 0 1 220 120" pathLength="100"/><path id="ul-arc" class="gauge-arc" d="M20 120 A100 100 0 0 1 220 120" pathLength="100"/></svg><strong id="ul-rate">— <small>Mb/s</small></strong></div><p id="ul-note">—</p><div class="gauge-scale"><span>0</span><span id="ul-max">2.5 Mb/s</span></div></article>
+        <article class="gauge-card ping-gauge"><h3>Ping <span>UE → core · this pass</span></h3><div class="gauge"><svg viewBox="0 0 240 140" aria-hidden="true"><path class="gauge-track" d="M20 120 A100 100 0 0 1 220 120" pathLength="100"/><path id="ping-arc" class="gauge-arc" d="M20 120 A100 100 0 0 1 220 120" pathLength="100"/></svg><strong id="ping-rate">— <small>ms</small></strong></div><p id="ping-note">—</p><div class="gauge-scale"><span>0</span><span>200 ms</span></div></article>
+        <article class="gauge-card snr-gauge"><h3>Feeder SNR <span>Pilot SNR · mean of both ends</span></h3><div class="gauge"><svg viewBox="0 0 240 140" aria-hidden="true"><path class="gauge-track" d="M20 120 A100 100 0 0 1 220 120" pathLength="100"/><path id="snr-arc" class="gauge-arc" d="M20 120 A100 100 0 0 1 220 120" pathLength="100"/></svg><strong id="snr-rate">— <small>dB</small></strong></div><p id="snr-note">—</p><div class="gauge-scale"><span>0</span><span>30 dB</span></div></article>
+      </div>
+    </div>
+    <div class="live-panel graph-stack two-graphs">
+      <section class="signal-panel fronthaul-panel"><div class="section-heading"><h3>UE throughput <span class="fh-keys"><i class="key dl-key"></i>Downlink <i class="key ul-key"></i>Uplink</span></h3><strong id="graph-rate">—</strong></div><p class="fronthaul-note" id="graph-note">End-to-end through the 5G cell and the satellite; shaded bands are the out-of-view gaps between passes.</p><div class="trend-chart" role="img" aria-label="UE downlink and uplink throughput and feeder SNR over the last 120 seconds, with out-of-view gaps shaded"><div class="axis-labels"><span id="axis-top">10 Mb/s</span><span id="axis-mid">5</span><span>0</span></div><svg viewBox="0 0 800 200" preserveAspectRatio="none" aria-hidden="true"><g id="outage-bands"></g><path class="chart-grid" d="M0 5H800 M0 52.5H800 M0 100H800 M0 147.5H800 M0 195H800"/><path id="ul-line" class="trend-line ul-line"/><path id="dl-line" class="trend-line dl-line"/></svg><div class="chart-events" id="chart-events"></div><div class="chart-time"><span>−120 s</span><span>−60 s</span><span>now</span></div></div></section>
+      <section class="signal-panel feeder-panel"><div class="section-heading"><h3>Satellite feeder <span class="fh-keys"><i class="key fwd-key"></i>FWD .20→.18 <i class="key ret-key"></i>RET .18→.20 <i class="key snr-dash"></i>SNR · lanes: MODCOD</span></h3><strong id="feeder-now">—</strong></div><div class="trend-chart feeder-chart" role="img" aria-label="Feeder throughput, SNR and MODCOD per direction over the last 120 seconds"><div class="axis-labels"><span id="feeder-top">40 Mb/s</span><span id="feeder-mid">20</span><span>0</span></div><div class="snr-axis"><span>30 dB</span><span>15</span><span>0</span></div><svg viewBox="0 0 800 200" preserveAspectRatio="none" aria-hidden="true"><g id="feeder-outages"></g><path class="chart-grid" d="M0 5H800 M0 100H800 M0 195H800"/><path id="fwd-snr" class="trend-line fwd-snr"/><path id="ret-snr" class="trend-line ret-snr"/><path id="fwd-rate" class="trend-line fwd-rate"/><path id="ret-rate" class="trend-line ret-rate"/></svg><div class="mc-lanes"><div class="mc-lane" id="lane-fwd"><b>FWD</b></div><div class="mc-lane" id="lane-ret"><b>RET</b></div></div><div class="chart-time"><span>−120 s</span><span>−60 s</span><span>now</span></div></div></section>
+    </div>
+    <aside class="orbit-panel" aria-label="LEO satellite pass">
+      <div class="orbit-scene-box"><svg class="orbit-scene" viewBox="0 0 300 300" role="img" aria-label="Schematic LEO pass over the gateway">
+          <defs><radialGradient id="globe-shade" cx="35%" cy="30%"><stop offset="0" stop-color="#344d6b"/><stop offset="1" stop-color="#192636"/></radialGradient><clipPath id="globe-clip"><circle cx="150" cy="170" r="85"/></clipPath></defs>
+          <circle cx="150" cy="150" r="102" class="orbit-track"/>
+          <g class="globe" transform="translate(26.47 10) scale(.82353)"><circle cx="150" cy="170" r="85" fill="url(#globe-shade)"/><g clip-path="url(#globe-clip)"><path class="land" d="M76 116L101 98 121 102 129 115 116 126 121 141 106 153 103 170 90 161 87 142 72 136Z M111 165L131 173 142 194 130 213 126 237 112 220 108 197 100 180Z M150 117L172 102 192 104 218 120 218 143 199 147 192 136 174 142 162 136 155 148 145 136Z M153 146L180 151 189 174 181 197 167 211 157 194 150 174 143 160Z M200 199L216 194 228 209 218 220 201 216Z"/><g class="globe-grid"><ellipse cx="150" cy="170" rx="35" ry="85"/><ellipse cx="150" cy="170" rx="69" ry="85"/><ellipse cx="150" cy="170" rx="85" ry="28"/><path d="M65 142Q150 171 235 142 M65 198Q150 169 235 198 M150 85V255"/></g></g><circle cx="150" cy="170" r="85" class="globe-rim"/></g>
+          <path d="M150 80 L27.8 35.5 M150 80 L272.2 35.5" class="mask-line"/><text x="30" y="30" class="mask-label">20° mask</text>
+          <line id="orbit-link" x1="150" y1="80" x2="150" y2="48"/>
+          <circle cx="150" cy="80" r="4" class="ground-point"/><text x="160" y="95" class="station-label">Gateways</text>
+          <g id="satellite-position" class="satellite"><path class="solar-panel" d="M-23-7H-7V7H-23Z M7-7H23V7H7Z"/><path class="solar-grid" d="M-18-7V7 M-12-7V7 M-23 0H-7 M12-7V7 M18-7V7 M7 0H23"/><rect class="satellite-bus" x="-6" y="-10" width="12" height="20" rx="2"/><path class="antenna" d="M0 10V16 M-7 12Q0 21 7 12"/></g>
+          <g id="out-of-view" hidden><rect x="58" y="12" width="184" height="26" rx="3"/><text x="150" y="29" text-anchor="middle" id="out-of-view-text">OUT OF VIEW</text></g>
+        </svg>
+        <dl class="pass-readouts" id="pass-readouts"></dl>
+        <p id="orbit-note">550-km LEO · pass accelerated about 10× · schematic, not to scale</p></div>
+    </aside>
+  </section>
+  <section class="cellular-panel" id="switch-panel" aria-live="polite"><h2 id="switch-title">Switching demo…</h2><p>The radios are being reflashed and the other demo is starting; this page reloads when it is ready.</p><div class="progress" id="progress" hidden><div class="progress-head"><b id="progress-step">—</b><span id="progress-time">—</span></div><div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="progress-bar"><i id="progress-fill"></i></div><ol class="phase-list" id="phase-list"></ol></div><ol id="switch-log" class="cellular-log"></ol></section>
+  <footer><span id="footer-note">Live · feeder path loss, visibility and delay are emulated from the LEO pass; all statistics are measured</span><span>cuSAT · OAI · Open5GS</span><div></div></footer>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

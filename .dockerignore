@@ -1,0 +1,16 @@
+.git
+.github
+/compose.yaml
+build*
+data
+results
+artifacts
+experiments
+notes
+cuSat---Journal
+cuSat---Wintech
+*.csv
+*.log
+__pycache__
+*.pyc
+deployment/cusat-mobile-backhaul/docker/site.env

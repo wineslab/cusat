@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: Apache-2.0
+# OpenShift/GH200 release image. The cluster base (BASE_IMAGE, set by
+# release.sh) supplies CUDA and its site-specific UHD 4.8 build; this binary
+# build receives the exact local source candidate through
+# `oc start-build --from-dir`.
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends iperf3 tmux \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace/cusat-release
+COPY . .
+RUN cmake -S . -B build/release \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CUDA_ARCHITECTURES=90 \
+      -DENABLE_UHD=ON \
+      -DNATIVE_OPTIMIZATIONS=OFF \
+    && cmake --build build/release --parallel "$(nproc)"
+
+ENTRYPOINT []
+CMD ["sleep", "infinity"]

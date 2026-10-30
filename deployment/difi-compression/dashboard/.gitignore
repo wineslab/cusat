@@ -1,0 +1,12 @@
+__pycache__/
+logs/
+fpga/
+.ssh*.sock
+
+*.pyc
+vendor/
+*.key
+*.pem
+settings.conf
+dashboard-live/assets/
+dashboard-cellular/assets/

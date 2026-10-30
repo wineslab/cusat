@@ -1,0 +1,38 @@
+name: cusat
+
+services:
+  cusat:
+    image: cusat:${CUSAT_IMAGE_TAG:-local}
+    build:
+      context: ../../..
+      dockerfile: deployment/cusat/docker/Dockerfile
+      args:
+        # A direct `docker compose up --build` creates a portable fat binary.
+        # Set CUSAT_CUDA_ARCH (e.g. 121) to make local rebuilds faster.
+        CUDA_ARCHITECTURES: ${CUSAT_CUDA_ARCH:-all-major}
+    network_mode: host
+    privileged: true
+    init: true
+    runtime: nvidia
+    # Optional host-specific CPU partition, e.g. CUSAT_CPUSET=4-19 when
+    # another real-time workload owns cores 0-3.
+    cpuset: "${CUSAT_CPUSET:-}"
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes:
+      - /dev:/dev
+      # Deliberately user-edited on each physical endpoint. See the CCM guide
+      # under docs/tutorials.
+      - type: bind
+        source: ./node.yaml
+        target: /etc/cusat/node.yaml
+        read_only: true
+        bind:
+          # Fail clearly until the tutorial's node0/node1 copy step is done;
+          # never create a directory where the YAML file should be.
+          create_host_path: false
+    command:
+      - /build/apps/dvbs2-uhd-trx
+      - --config
+      - /etc/cusat/node.yaml

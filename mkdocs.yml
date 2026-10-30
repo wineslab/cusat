@@ -1,0 +1,41 @@
+site_name: cuSAT
+site_description: GPU-accelerated DVB-S2/S2X transceiver documentation
+site_url: https://wineslab.github.io/dvb-s2x/
+repo_url: https://github.com/wineslab/dvb-s2x
+repo_name: wineslab/dvb-s2x
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Tutorials:
+      - Prepare Docker hosts:
+          - Jetson Orin NX: tutorials/setup-orin.md
+          - Jetson Thor: tutorials/setup-thor.md
+          - DGX Spark: tutorials/setup-spark.md
+          - USRP network and optional VLAN: tutorials/usrp-networking.md
+      - 1. Connect two endpoints with CCM: tutorials/01-ccm-bringup.md
+      - 2. ACM and orbital channels: tutorials/02-acm-orbital-channels.md
+      - 3. OAI mobile backhaul: tutorials/03-oai-backhaul.md
+      - 4. OpenShift: tutorials/04-openshift.md
+  - Technical notes:
+      - DVB-S2X tables: dvbs2x-spec-tables.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - tables
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js

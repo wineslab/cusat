@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1
+# SPDX-License-Identifier: Apache-2.0
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG OAI_REPOSITORY=https://github.com/duranta-project/openairinterface5g.git
+ARG OAI_REF=develop
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates cmake git ninja-build sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git init /opt/openairinterface5g \
+    && git -C /opt/openairinterface5g remote add origin "${OAI_REPOSITORY}" \
+    && git -C /opt/openairinterface5g fetch --depth 1 origin "${OAI_REF}" \
+    && git -C /opt/openairinterface5g checkout --detach FETCH_HEAD \
+    && git -C /opt/openairinterface5g rev-parse HEAD > /opt/openairinterface5g/.cusat-oai-revision
+
+# Let OAI install the dependency set corresponding to the selected revision,
+# then build the gNB with its normal USRP radio support. The out-of-tree proxy
+# is compiled against this exact source tree, so no OAI patch or fork is used.
+RUN --mount=type=cache,target=/root/.cache/ccache \
+    cd /opt/openairinterface5g/cmake_targets \
+    && ./build_oai -I
+
+# As of OAI develop on Ubuntu 24.04, build_oai -I installs uhd-host but omits
+# the development package containing UHDConfig.cmake.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       iproute2 iputils-ping libboost-dev libuhd-dev procps \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN --mount=type=cache,target=/root/.cache/ccache \
+    cd /opt/openairinterface5g/cmake_targets \
+    && ./build_oai --gNB -w USRP --ninja
+
+WORKDIR /workspace/cusat
+COPY . .
+RUN install -D -m 0644 \
+      deployment/cusat-mobile-backhaul/oai/usrp_config_proxy.conf \
+      /opt/cusat-oai-config/usrp_config_proxy.conf
+RUN cmake -S deployment/cusat-mobile-backhaul/oai-plugin \
+          -B /opt/usrpproxy-build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DOAI_SOURCE_DIR=/opt/openairinterface5g \
+          -DCUSAT_SOURCE_DIR=/workspace/cusat \
+    && cmake --build /opt/usrpproxy-build --parallel "$(nproc)" \
+    && test -x /opt/openairinterface5g/cmake_targets/ran_build/build/nr-softmodem \
+    && test -f /opt/usrpproxy-build/libusrpproxy.so \
+    && ! ldd /opt/openairinterface5g/cmake_targets/ran_build/build/nr-softmodem | grep -q 'not found' \
+    && ! ldd /opt/usrpproxy-build/libusrpproxy.so | grep -q 'not found'
+
+ENTRYPOINT []
+CMD ["sleep", "infinity"]

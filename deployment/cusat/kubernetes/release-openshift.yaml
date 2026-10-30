@@ -1,0 +1,81 @@
+# Rendered by deployment/cusat/kubernetes/release.sh. The __...__ tokens allow the build
+# and runtime resources to live in different OpenShift namespaces.
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: __NAME__
+  namespace: __BUILD_NS__
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: __NAME__
+  namespace: __BUILD_NS__
+spec:
+  source:
+    type: Binary
+    binary: {}
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: deployment/cusat/kubernetes/Dockerfile.openshift
+      buildArgs:
+        - name: BASE_IMAGE
+          value: "__BASE_IMAGE__"
+  output:
+    to:
+      kind: ImageStreamTag
+      name: __NAME__:candidate
+  nodeSelector:
+    kubernetes.io/arch: arm64
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: __NAME__
+  namespace: __RUN_NS__
+spec:
+  serviceName: __NAME__
+  podManagementPolicy: Parallel
+  replicas: 2
+  selector:
+    matchLabels:
+      app: __NAME__
+  template:
+    metadata:
+      labels:
+        app: __NAME__
+      annotations:
+        k8s.v1.cni.cncf.io/networks: '[{ "name": "__RADIO_NETWORK__" }]'
+    spec:
+      containers:
+        - name: cusat
+          image: image-registry.openshift-image-registry.svc:5000/__BUILD_NS__/__NAME__:candidate
+          imagePullPolicy: Always
+          command: ["/bin/bash", "-lc"]
+          args:
+            - >-
+              nvidia-smi -L &&
+              ctest --test-dir /workspace/cusat-release/build/release --output-on-failure &&
+              touch /tmp/cusat-release-ready &&
+              exec sleep infinity
+          readinessProbe:
+            exec:
+              command: ["test", "-f", "/tmp/cusat-release-ready"]
+            periodSeconds: 2
+            failureThreshold: 300
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["NET_ADMIN"]
+          resources:
+            requests:
+              cpu: "8"
+              memory: 32Gi
+              nvidia.com/gpu: "1"
+              openshift.io/vfgh: "1"
+            limits:
+              cpu: "8"
+              memory: 32Gi
+              nvidia.com/gpu: "1"
+              openshift.io/vfgh: "1"

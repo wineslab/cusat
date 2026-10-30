@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Demo: Exploring O-RAN-Inspired Functional Splits for DIFI-Based SATCOM</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div class="identity"><span class="wordmark">cuSAT</span><h1>Demo: Exploring O-RAN-Inspired Functional Splits<br>for DIFI-Based SATCOM</h1></div>
+      <div class="status"><span id="live" class="badge offline" role="status">Connecting</span><button id="fullscreen" class="quiet"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m6 0h4v-4"/></svg>Full screen</button></div>
+    </header>
+
+    <div class="workbench">
+      <aside class="controls" aria-label="Link controls">
+        <div class="control-title"><h2>Link configuration</h2><span>CCM · manual</span></div>
+        <div class="control-group">
+          <h3>RX compression</h3>
+          <div id="codecs" class="codecs" role="group" aria-label="RX compression format"></div>
+          <p class="scale-note">Shift 6. Format changes briefly pause RX.<br>Both modem processes stay running.</p>
+        </div>
+        <div class="control-group sliders">
+          <div class="slider-head"><label for="snr">Added-noise SNR</label><output id="snr-value" for="snr">Noise off</output></div>
+          <input id="snr" type="range" min="2" max="27" step="1" value="27" aria-describedby="noise-note" title="Host noise is added after decompression; pilot SNR also includes compression distortion.">
+          <div class="ticks"><span>2 dB</span><span>26 dB</span><span>Off</span></div>
+          <p id="noise-note">Host noise, added after decompression.<br>The measured SNR includes compression distortion.</p>
+        </div>
+        <div class="control-group sliders">
+          <div class="slider-head"><label for="modcod">MODCOD</label><output id="modcod-value" for="modcod">QPSK 1/2</output></div>
+          <input id="modcod" type="range" min="0" max="7" step="1" value="0" aria-describedby="modcod-note" title="Manual CCM; changes apply to both directions at frame boundaries.">
+          <div class="ticks"><span>QPSK</span><span>8PSK</span><span>16APSK</span><span>32APSK</span></div>
+          <p id="modcod-note">Fixed code rate, independent of SNR.<br>Changes apply to both directions at frame boundaries.</p>
+        </div>
+        <div class="action-row"><button id="reset">Restore baseline</button><span id="action" role="status">Waiting for telemetry…</span></div>
+      </aside>
+
+      <section class="measurements" aria-label="Live link measurements">
+        <div class="measurement-toolbar"><h2>Live measurements</h2><div class="direction" role="group" aria-label="Measured direction"><button data-host="12" class="chosen" aria-pressed="true">USRP .18 → .20</button><button data-host="11" aria-pressed="false">USRP .20 → .18</button></div></div>
+        <div class="metrics">
+          <article><h3>RX fronthaul <span>Mb/s</span></h3><strong id="fh">—</strong><p>DIFI UDP payload · <b id="savings">reference</b></p></article>
+          <article><h3>Pilot SNR <span>dB</span></h3><strong id="snr-metric">—</strong><p id="lock">Awaiting samples</p></article>
+          <article><h3>Frame error rate <span>%</span></h3><strong id="fer">—</strong><p id="fec">No decoded frames yet</p></article>
+          <article><h3>IP goodput <span>Mb/s</span></h3><strong id="goodput">—</strong><p>10 Mb/s offered per direction</p></article>
+        </div>
+        <div class="plots">
+          <figure><figcaption><h3>Fronthaul and delivered traffic</h3><div class="legend"><span><i class="blue"></i>RX DIFI · left axis</span><span><i class="slate"></i>IP goodput · right axis</span><span class="axis-unit">Mb/s</span></div></figcaption><canvas id="throughput" role="img" aria-label="Measured RX fronthaul and delivered IP goodput over the last three minutes"></canvas></figure>
+          <figure><figcaption><h3>Signal quality and FEC</h3><div class="legend"><span><i class="ochre"></i>Pilot SNR · dB</span><span><i class="red"></i>Post-BCH errors · %</span></div></figcaption><canvas id="quality" role="img" aria-label="Measured pilot SNR and post-BCH frame error rate over the last three minutes"></canvas></figure>
+        </div>
+        <div class="health"><span id="actual">Actual settings: awaiting telemetry</span><span id="drops">Transport: —</span></div>
+      </section>
+    </div>
+
+    <section class="path" aria-label="Processing placement">
+      <div class="path-heading"><h2>Processing path</h2><span>FLEX1 · placement fixed</span></div>
+      <div class="pipeline">
+        <div class="node"><small>Host</small><strong>GSE + FEC encode</strong></div>
+        <div class="wire"><b>DIFI →</b><span>Constellation indices</span></div>
+        <div class="node"><small>TX FPGA</small><strong>Mapping · pilots · RRC</strong></div>
+        <div class="air"><b>RF →</b><span>Cabled link</span></div>
+        <div class="node"><small>RX FPGA</small><strong>Filter + IQ compression</strong></div>
+        <div class="wire"><b>DIFI →</b><span>Compressed IQ</span></div>
+        <div class="node"><small>Host</small><strong>Timing + FEC decode</strong></div>
+      </div>
+      <p class="path-note">Other processing placements require separately validated FPGA profiles. DIFI compression profiles are experimental extensions.</p>
+    </section>
+    <footer><span>15.36 Msym/s · Two DGX Sparks / two X410s</span><span id="updated">No live samples</span></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
